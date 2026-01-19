@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Feedback Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.1.1/wordcloud2.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        #wordcloudCanvas {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+</head>
+<body class="py-8 px-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">User Feedback Dashboard</h1>
+            <p class="text-white/80">AI-powered feedback analysis with automatic sentiment and categorization</p>
+        </div>
+
+        <!-- Feedback Form -->
+        <div class="bg-white rounded-lg shadow-xl p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Submit Feedback</h2>
+            <form id="feedbackForm" class="space-y-4">
+                <div>
+                    <label for="content" class="block text-sm font-medium text-gray-700 mb-2">
+                        Feedback Content <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                        id="content"
+                        name="content"
+                        rows="4"
+                        required
+                        placeholder="Enter your feedback here... AI will automatically categorize and analyze sentiment."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    ></textarea>
+                </div>
+                <button
+                    type="submit"
+                    class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                    Submit Feedback
+                </button>
+            </form>
+        </div>
+
+        <!-- Word Cloud Visualization -->
+        <div class="bg-white rounded-lg shadow-xl p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Word Cloud Visualization</h2>
+            <div id="wordcloudContainer" class="relative min-h-[400px] bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 flex justify-center items-center">
+                <canvas id="wordcloudCanvas" class="hidden"></canvas>
+                <div id="wordcloudLoading" class="text-gray-500 text-center">
+                    <svg class="animate-spin h-8 w-8 mx-auto mb-2 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p>Generating word cloud...</p>
+                </div>
+                <div id="wordcloudEmpty" class="text-gray-500 text-center hidden">
+                    <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                    </svg>
+                    <p>No feedback available to generate word cloud</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback List -->
+        <div class="bg-white rounded-lg shadow-xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">All Feedback</h2>
+                <button
+                    id="refreshBtn"
+                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+            <div id="loading" class="text-center py-8 text-gray-500 hidden">
+                Loading feedback...
+            </div>
+            <div id="error" class="text-center py-8 text-red-500 hidden"></div>
+            <div id="feedbackList" class="space-y-4">
+                <!-- Feedback items will be inserted here -->
+            </div>
+            <div id="emptyState" class="text-center py-12 text-gray-500 hidden">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="text-lg">No feedback yet. Be the first to submit!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/feedback';
+        
+        // Get DOM elements
+        const feedbackForm = document.getElementById('feedbackForm');
+        const feedbackList = document.getElementById('feedbackList');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const emptyState = document.getElementById('emptyState');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const wordcloudCanvas = document.getElementById('wordcloudCanvas');
+        const wordcloudLoading = document.getElementById('wordcloudLoading');
+        const wordcloudEmpty = document.getElementById('wordcloudEmpty');
+
+        // Common English stop words to filter out
+        const STOP_WORDS = new Set([
+            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with',
+            'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had',
+            'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must',
+            'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
+            'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+            'what', 'which', 'who', 'whom', 'whose', 'where', 'when', 'why', 'how', 'all', 'each',
+            'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not',
+            'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'now', 'then', 'here',
+            'there', 'up', 'down', 'out', 'off', 'over', 'under', 'again', 'further', 'once'
+        ]);
+
+        // Extract and process words from feedback
+        function extractWordsFromFeedback(feedbackArray) {
+            const allText = feedbackArray
+                .map(item => item.content || '')
+                .join(' ')
+                .toLowerCase()
+                .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
+                .split(/\s+/) // Split by whitespace
+                .filter(word => word.length > 2); // Filter out very short words
+
+            // Count word frequencies
+            const wordCount = {};
+            allText.forEach(word => {
+                const cleanedWord = word.trim();
+                if (cleanedWord && !STOP_WORDS.has(cleanedWord)) {
+                    wordCount[cleanedWord] = (wordCount[cleanedWord] || 0) + 1;
+                }
+            });
+
+            // Convert to array format for WordCloud2 and sort by frequency
+            const wordList = Object.entries(wordCount)
+                .sort((a, b) => b[1] - a[1]) // Sort by frequency descending
+                .slice(0, 50) // Take top 50 words
+                .map(([word, count]) => [word, count]);
+
+            console.log('Extracted words:', wordList.slice(0, 10)); // Debug: log first 10 words
+            return wordList;
+        }
+
+        // Wait for WordCloud library to load
+        function waitForWordCloud(callback, maxAttempts = 50) {
+            let attempts = 0;
+            const checkLibrary = () => {
+                attempts++;
+                if (typeof WordCloud !== 'undefined') {
+                    callback();
+                } else if (attempts < maxAttempts) {
+                    setTimeout(checkLibrary, 100);
+                } else {
+                    console.error('WordCloud library failed to load after', maxAttempts, 'attempts');
+                    wordcloudCanvas.classList.add('hidden');
+                    wordcloudLoading.classList.add('hidden');
+                    wordcloudEmpty.classList.remove('hidden');
+                    wordcloudEmpty.innerHTML = '<p class="text-red-500">Word cloud library failed to load. Please refresh the page.</p>';
+                }
+            };
+            checkLibrary();
+        }
+
+        // Generate word cloud
+        function generateWordCloud(wordList) {
+            // Hide loading and empty states
+            wordcloudLoading.classList.add('hidden');
+            wordcloudEmpty.classList.add('hidden');
+
+            if (!wordList || wordList.length === 0) {
+                wordcloudCanvas.classList.add('hidden');
+                wordcloudEmpty.classList.remove('hidden');
+                console.log('Word cloud: No words to display');
+                return;
+            }
+
+            console.log('Word cloud: Generating with', wordList.length, 'words');
+            console.log('Sample words:', wordList.slice(0, 5));
+
+            // Wait for library to be available
+            waitForWordCloud(() => {
+                generateWordCloudInternal(wordList);
+            });
+        }
+
+        // Internal function to generate word cloud (called after library loads)
+        function generateWordCloudInternal(wordList) {
+
+            // Color palette for the word cloud
+            const colors = [
+                '#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe',
+                '#43e97b', '#38f9d7', '#ffecd2', '#fcb69f', '#ff9a9e',
+                '#a18cd1', '#fad0c4', '#ffd1ff', '#ff9a56', '#ff6a88'
+            ];
+
+            try {
+                // Set canvas size first
+                const container = wordcloudCanvas.parentElement;
+                let width = container.clientWidth - 32; // Account for padding
+                const height = 400;
+
+                // Fallback if width calculation fails
+                if (width < 200) {
+                    width = 800; // Default width
+                }
+
+                // Set canvas dimensions as attributes (important for WordCloud2)
+                wordcloudCanvas.setAttribute('width', width);
+                wordcloudCanvas.setAttribute('height', height);
+                wordcloudCanvas.width = width;
+                wordcloudCanvas.height = height;
+
+                // Clear canvas
+                const ctx = wordcloudCanvas.getContext('2d');
+                ctx.clearRect(0, 0, width, height);
+
+                // Show canvas
+                wordcloudCanvas.classList.remove('hidden');
+
+                // Generate word cloud with a small delay to ensure canvas is ready
+                setTimeout(() => {
+                    try {
+                        console.log('Calling WordCloud with', wordList.length, 'words');
+                        console.log('Canvas size:', width, 'x', height);
+                        
+                        WordCloud(wordcloudCanvas, {
+                            list: wordList,
+                            gridSize: Math.max(4, Math.round(16 * width / 1024)),
+                            weightFactor: function (size) {
+                                return size * (width / 600) * 15;
+                            },
+                            fontFamily: 'Arial, sans-serif',
+                            color: function () {
+                                return colors[Math.floor(Math.random() * colors.length)];
+                            },
+                            rotateRatio: 0.3,
+                            rotationSteps: 2,
+                            backgroundColor: 'transparent',
+                            minSize: 8,
+                            drawOutOfBound: false,
+                            shuffle: false,
+                            shape: 'circle'
+                        });
+                        console.log('Word cloud: Generated successfully');
+                    } catch (err) {
+                        console.error('Word cloud generation error:', err);
+                        console.error('Error stack:', err.stack);
+                        wordcloudCanvas.classList.add('hidden');
+                        wordcloudEmpty.classList.remove('hidden');
+                        wordcloudEmpty.innerHTML = '<p class="text-red-500">Error generating word cloud: ' + err.message + '</p>';
+                    }
+                }, 200);
+            } catch (err) {
+                console.error('Word cloud setup error:', err);
+                wordcloudCanvas.classList.add('hidden');
+                wordcloudEmpty.classList.remove('hidden');
+            }
+        }
+
+        // Load feedback on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFeedback();
+        });
+
+        // Handle form submission
+        feedbackForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(feedbackForm);
+            const content = formData.get('content');
+
+            try {
+                const submitBtn = feedbackForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Analyzing with AI...';
+
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to submit feedback');
+                }
+
+                // Reset form and reload feedback
+                feedbackForm.reset();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Feedback';
+                await loadFeedback();
+
+                // Show success message
+                showNotification('Feedback submitted successfully!', 'success');
+            } catch (err) {
+                showNotification(err.message || 'Error submitting feedback', 'error');
+                const submitBtn = feedbackForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Feedback';
+            }
+        });
+
+        // Handle refresh button
+        refreshBtn.addEventListener('click', () => {
+            loadFeedback();
+        });
+
+        // Load feedback from API
+        async function loadFeedback() {
+            loading.classList.remove('hidden');
+            error.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            feedbackList.innerHTML = '';
+
+            // Show loading state for word cloud
+            wordcloudLoading.classList.remove('hidden');
+            wordcloudEmpty.classList.add('hidden');
+
+            try {
+                const response = await fetch(API_BASE);
+                if (!response.ok) {
+                    throw new Error('Failed to load feedback');
+                }
+
+                const data = await response.json();
+                loading.classList.add('hidden');
+
+                // Generate word cloud from feedback data
+                if (data.length > 0) {
+                    const wordList = extractWordsFromFeedback(data);
+                    generateWordCloud(wordList);
+                } else {
+                    wordcloudLoading.classList.add('hidden');
+                    wordcloudEmpty.classList.remove('hidden');
+                }
+
+                if (data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                // Render feedback items
+                data.forEach(item => {
+                    const feedbackItem = createFeedbackItem(item);
+                    feedbackList.appendChild(feedbackItem);
+                });
+            } catch (err) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                error.textContent = err.message || 'Error loading feedback';
+                wordcloudLoading.classList.add('hidden');
+                wordcloudEmpty.classList.remove('hidden');
+            }
+        }
+
+        // Create feedback item element
+        function createFeedbackItem(item) {
+            const div = document.createElement('div');
+            div.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200';
+
+            const sentimentColors = {
+                'Positive': 'bg-green-100 text-green-800',
+                'Negative': 'bg-red-100 text-red-800',
+                'Neutral': 'bg-gray-100 text-gray-800'
+            };
+
+            const categoryColors = {
+                'Bug': 'bg-red-50 text-red-700 border-red-200',
+                'Feature Request': 'bg-blue-50 text-blue-700 border-blue-200',
+                'Pricing': 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                'UX/UI': 'bg-purple-50 text-purple-700 border-purple-200',
+                'Performance': 'bg-orange-50 text-orange-700 border-orange-200',
+                'Other': 'bg-gray-50 text-gray-700 border-gray-200'
+            };
+
+            const sentimentClass = sentimentColors[item.sentiment] || sentimentColors['Neutral'];
+            const categoryClass = categoryColors[item.category] || categoryColors['Other'];
+
+            const date = new Date(item.created_at).toLocaleString();
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex gap-2 flex-wrap">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${sentimentClass}">
+                            ${item.sentiment}
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold border ${categoryClass}">
+                            ${item.category}
+                        </span>
+                    </div>
+                    <span class="text-xs text-gray-500">${date}</span>
+                </div>
+                <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(item.content)}</p>
+            `;
+
+            return div;
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
