@@ -48,4 +48,14 @@ https://my-feedback-dashboard.qianyul2.workers.dev/
 ---
 
 ## 📁 Repository Structure (High-Level)
+.
+├── src/ # Worker entry and routing logic
+├── public/ # Static assets for the dashboard UI (if used)
+├── migrations/ # D1 schema and migrations
+├── wrangler.toml # Cloudflare configuration and bindings
+└── README.md
+
+## ⚠️Disclaimer
+This project was built as part of a time-boxed assignment.
+Some aspects (manual data input, mock data, limited UI) are intentional to focus on platform evaluation rather than feature completeness.
 
